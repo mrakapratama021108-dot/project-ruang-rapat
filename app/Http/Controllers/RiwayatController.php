@@ -12,20 +12,19 @@ class RiwayatController extends Controller
     {
         $query = Booking::with('room');
 
-        if ($request->filled('tanggal_mulai') && $request->filled('tanggal_selesai')) {
-            $query->whereBetween('tanggal_rapat', [$request->tanggal_mulai, $request->tanggal_selesai]);
+        if ($request->filled('tanggal_mulai') && $request->filled('tanggal_selesai')) {$query->whereBetween('tanggal_rapat', [$request->tanggal_mulai,$request->tanggal_selesai]);
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search =$request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('judul_rapat', 'like', "%{$search}%")
+                $q->where('judul_rapat', 'like', "\%{$search}%")
                   ->orWhere('penanggung_jawab', 'like', "%{$search}%")
-                  ->orWhereHas('room', fn($r) => $r->where('nama_ruangan', 'like', "%{$search}%"));
+                  ->orWhereHas('room', fn($r) => $r->where('nama_ruangan', 'like', "\%{$search}%"));
             });
         }
 
-        $riwayat = $query->orderByDesc('tanggal_rapat')->orderByDesc('jam_mulai')->get();
+        $riwayat =$query->orderByDesc('tanggal_rapat')->orderByDesc('jam_mulai')->get();
 
         return view('riwayat.index', compact('riwayat'));
     }
@@ -40,8 +39,8 @@ class RiwayatController extends Controller
     // Batalkan Booking Ruangan
     public function destroy(Booking $booking)
     {
-        $namaRuangan = $booking->room->nama_ruangan ?? 'Ruangan';
-        $judulRapat = $booking->judul_rapat;
+        $namaRuangan =$booking->room->nama_ruangan ?? 'Ruangan';
+        $judulRapat =$booking->judul_rapat;
 
         $booking->delete();
 
@@ -54,20 +53,19 @@ class RiwayatController extends Controller
     {
         $query = Booking::with('room');
 
-        if ($request->filled('tanggal_mulai') && $request->filled('tanggal_selesai')) {
-            $query->whereBetween('tanggal_rapat', [$request->tanggal_mulai, $request->tanggal_selesai]);
+        if ($request->filled('tanggal_mulai') && $request->filled('tanggal_selesai')) {$query->whereBetween('tanggal_rapat', [$request->tanggal_mulai,$request->tanggal_selesai]);
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search =$request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('judul_rapat', 'like', "%{$search}%")
+                $q->where('judul_rapat', 'like', "\%{$search}%")
                   ->orWhere('penanggung_jawab', 'like', "%{$search}%")
-                  ->orWhereHas('room', fn($r) => $r->where('nama_ruangan', 'like', "%{$search}%"));
+                  ->orWhereHas('room', fn($r) => $r->where('nama_ruangan', 'like', "\%{$search}%"));
             });
         }
 
-        $riwayat = $query->orderBy('tanggal_rapat')->orderBy('jam_mulai')->get();
+        $riwayat =$query->orderBy('tanggal_rapat')->orderBy('jam_mulai')->get();
 
         $namaFile = 'Laporan_Ruang_Rapat_' . date('Y-m-d_His') . '.xls';
 

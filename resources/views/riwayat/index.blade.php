@@ -17,18 +17,80 @@
     </script>
 @endif
 
+@php
+    $daftarBulan = [
+        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+        5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+    ];
+@endphp
+
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
         <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Riwayat & Laporan Rapat</h2>
         <p class="text-sm text-zinc-500 mt-0.5">Filter data penggunaan ruang rapat dan cetak rekap laporan.</p>
     </div>
-    <a href="{{ route('riwayat.cetak', request()->query()) }}" target="_blank"
-       class="inline-flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/>
-        </svg>
-        Cetak Laporan
-    </a>
+
+    <!-- Tombol Cetak Laporan + Dropdown Menu -->
+    <div class="relative inline-block" id="dropdownCetakWrapper">
+        <button type="button" onclick="toggleDropdownCetak()"
+           class="cursor-pointer inline-flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/>
+            </svg>
+            <span>Cetak Laporan</span>
+            <svg id="chevronCetak" class="w-4 h-4 text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+        </button>
+
+        <!-- Popover Pilihan Bulanan / Tahunan -->
+        <div id="dropdownCetakMenu" style="min-width: 350px;"
+             class="hidden absolute left-0 sm:left-auto sm:right-0 mt-2 bg-white rounded-2xl border border-zinc-200 shadow-lg p-5 z-40">
+            
+            <!-- Opsi 1: Bulanan -->
+            <form action="{{ route('riwayat.cetak') }}" method="GET" class="pb-4 border-b border-zinc-100">
+                <input type="hidden" name="periode" value="bulanan">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Laporan Bulanan</label>
+                <div class="flex items-center gap-2">
+                    <select name="bulan"
+                            class="flex-1 cursor-pointer bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-sm font-medium text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        @foreach($daftarBulan as $angka => $nama)
+                            <option value="{{ $angka }}" {{ now()->month == $angka ? 'selected' : '' }}>{{ $nama }}</option>
+                        @endforeach
+                    </select>
+                    <select name="tahun"
+                            class="cursor-pointer bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-sm font-medium text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        @for($y = now()->year + 1; $y >= now()->year - 4; $y--)
+                            <option value="{{ $y }}" {{ now()->year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @endfor
+                    </select>
+                    <button type="submit" onclick="tutupDropdownCetak()" style="min-width: 92px;"
+                            class="cursor-pointer inline-flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold px-5 py-2 rounded-xl shadow-xs transition">
+                        Cetak
+                    </button>
+                </div>
+            </form>
+
+            <!-- Opsi 2: Tahunan -->
+            <form action="{{ route('riwayat.cetak') }}" method="GET" class="pt-4">
+                <input type="hidden" name="periode" value="tahunan">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Laporan Tahunan</label>
+                <div class="flex items-center gap-2">
+                    <select name="tahun"
+                            class="flex-1 cursor-pointer bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-sm font-medium text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        @for($y = now()->year + 1; $y >= now()->year - 4; $y--)
+                            <option value="{{ $y }}" {{ now()->year == $y ? 'selected' : '' }}>Tahun {{ $y }}</option>
+                        @endfor
+                    </select>
+                    <button type="submit" onclick="tutupDropdownCetak()" style="min-width: 92px;"
+                            class="cursor-pointer inline-flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold px-5 py-2 rounded-xl shadow-xs transition">
+                        Cetak
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div class="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs mb-6">
@@ -125,4 +187,25 @@
         </table>
     </div>
 </div>
+
+<script>
+    function toggleDropdownCetak() {
+        const menu = document.getElementById('dropdownCetakMenu');
+        const chevron = document.getElementById('chevronCetak');
+        menu.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+    }
+
+    function tutupDropdownCetak() {
+        document.getElementById('dropdownCetakMenu').classList.add('hidden');
+        document.getElementById('chevronCetak').classList.remove('rotate-180');
+    }
+
+    document.addEventListener('click', function (e) {
+        const wrapper = document.getElementById('dropdownCetakWrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            tutupDropdownCetak();
+        }
+    });
+</script>
 @endsection
