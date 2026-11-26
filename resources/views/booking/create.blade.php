@@ -73,13 +73,15 @@
                         @foreach($availableRooms as $index => $room)
                         @php
                             $isTerpadu = stripos($room->nama_ruangan, 'Terpadu') !== false;
-                            $gambarRuangan = asset('foto/sidang-sehat.jpg');
-                            if (!$isTerpadu && stripos($room->nama_ruangan, 'Cerdas') !== false) {
-                                $gambarRuangan = asset('foto/sidang-cerdas.jpg');
-                            } elseif (!$isTerpadu && stripos($room->nama_ruangan, 'Ceria') !== false) {
-                                $gambarRuangan = asset('foto/sidang-ceria.jpg');
-                            } elseif (stripos($room->nama_ruangan, 'Cerdas – Ceria') !== false) {
-                                $gambarRuangan = asset('foto/sidang-cerdas.jpg');
+                            $gambarRuangan = '';
+                            if (!$isTerpadu) {
+                                if (stripos($room->nama_ruangan, 'Cerdas') !== false) {
+                                    $gambarRuangan = asset('foto/sidang-cerdas.jpg');
+                                } elseif (stripos($room->nama_ruangan, 'Ceria') !== false) {
+                                    $gambarRuangan = asset('foto/sidang-ceria.jpg');
+                                } else {
+                                    $gambarRuangan = asset('foto/sidang-sehat.jpg');
+                                }
                             }
                         @endphp
                         <label class="cursor-pointer block">
@@ -115,9 +117,9 @@
                         @endforeach
                     </div>
 
-                    <!-- KOTAK PREVIEW GAMBAR RUANGAN -->
+                    <!-- KOTAK PREVIEW RUANGAN TERPILIH -->
                     <div class="mt-4 p-4 rounded-2xl border border-zinc-200 bg-zinc-50/70" style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
-                        <div style="width: 240px; height: 145px; flex-shrink: 0; overflow: hidden; border-radius: 12px; border: 1px solid #e4e4e7; background-color: #e4e4e7;">
+                        <div id="preview-gambar-wrapper" style="width: 240px; height: 145px; flex-shrink: 0; overflow: hidden; border-radius: 12px; border: 1px solid #e4e4e7; background-color: #e4e4e7;">
                             <img id="preview-gambar"
                                  src="{{ asset('foto/sidang-sehat.jpg') }}"
                                  alt="Preview Ruangan"
@@ -174,21 +176,28 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const radios = document.querySelectorAll('.room-radio');
+        const previewWrapper = document.getElementById('preview-gambar-wrapper');
         const previewImg = document.getElementById('preview-gambar');
         const previewNama = document.getElementById('preview-nama');
         const previewKapasitas = document.getElementById('preview-kapasitas');
         const previewFasilitas = document.getElementById('preview-fasilitas');
 
         function updatePreview(radio) {
-            if (!radio || !previewImg) return;
-            previewImg.style.opacity = '0.4';
-            setTimeout(() => {
-                previewImg.src = radio.dataset.gambar;
-                previewNama.textContent = radio.dataset.nama;
-                previewKapasitas.textContent = 'Kapasitas: ' + radio.dataset.kapasitas;
-                previewFasilitas.textContent = 'Fasilitas: ' + radio.dataset.fasilitas;
-                previewImg.style.opacity = '1';
-            }, 100);
+            if (!radio) return;
+            previewNama.textContent = radio.dataset.nama;
+            previewKapasitas.textContent = 'Kapasitas: ' + radio.dataset.kapasitas;
+            previewFasilitas.textContent = 'Fasilitas: ' + radio.dataset.fasilitas;
+
+            if (radio.dataset.gambar) {
+                previewWrapper.style.display = 'block';
+                previewImg.style.opacity = '0.4';
+                setTimeout(() => {
+                    previewImg.src = radio.dataset.gambar;
+                    previewImg.style.opacity = '1';
+                }, 100);
+            } else {
+                previewWrapper.style.display = 'none';
+            }
         }
 
         const checkedRadio = document.querySelector('.room-radio:checked');
