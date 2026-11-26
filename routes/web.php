@@ -10,6 +10,7 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 // Alur Kiri: Booking Ruangan
 Route::get('/booking/buat', [BookingController::class, 'create'])->name('booking.create');
 Route::post('/booking/simpan', [BookingController::class, 'store'])->name('booking.store');
+Route::patch('/booking/{booking}/zoom', [BookingController::class, 'updateZoom'])->name('booking.zoom');
 
 // Alur Kanan: Riwayat & Laporan
 Route::get('/riwayat', [RiwayatController::class, 'index'])->name('riwayat.index');

@@ -14,10 +14,21 @@ class BookingController extends Controller
         $availableRooms = collect();
 
         if ($request->filled(['tanggal_rapat', 'jam_mulai', 'jam_selesai'])) {
-            $checked = true;
             $tanggal = $request->tanggal_rapat;
-            $mulai = $request->jam_mulai;
-            $selesai = $request->jam_selesai;
+            $mulai = substr($request->jam_mulai, 0, 5);
+            $selesai = substr($request->jam_selesai, 0, 5);
+
+            if ($mulai < '08:00' || $selesai > '16:00') {
+                return redirect()->route('booking.create', ['tanggal_rapat' => $tanggal])
+                    ->with('error', 'Jam operasional ruang rapat hanya berlaku pukul 08:00 hingga 16:00.');
+            }
+
+            if ($selesai <= $mulai) {
+                return redirect()->route('booking.create', ['tanggal_rapat' => $tanggal])
+                    ->with('error', 'Jam selesai harus lebih akhir dari jam mulai.');
+            }
+
+            $checked = true;
 
             $bookedRoomIds = Booking::whereDate('tanggal_rapat', $tanggal)
                 ->where('jam_mulai', '<', $selesai)
@@ -52,7 +63,14 @@ class BookingController extends Controller
             'fasilitas_tambahan' => 'nullable|string|max:255',
         ]);
 
-        if ($request->jam_selesai <= $request->jam_mulai) {
+        $jamMulai = substr($request->jam_mulai, 0, 5);
+        $jamSelesai = substr($request->jam_selesai, 0, 5);
+
+        if ($jamMulai < '08:00' || $jamSelesai > '16:00') {
+            return back()->withInput()->with('error', 'Jam operasional ruang rapat hanya berlaku pukul 08:00 hingga 16:00.');
+        }
+
+        if ($jamSelesai <= $jamMulai) {
             return back()->withInput()->with('error', 'Jam selesai harus lebih akhir dari jam mulai.');
         }
 
@@ -70,8 +88,8 @@ class BookingController extends Controller
         $bookingBentrok = Booking::with('room')
             ->whereIn('room_id', $relatedRoomIds)
             ->whereDate('tanggal_rapat', $request->tanggal_rapat)
-            ->where('jam_mulai', '<', $request->jam_selesai)
-            ->where('jam_selesai', '>', $request->jam_mulai)
+            ->where('jam_mulai', '<', $jamSelesai)
+            ->where('jam_selesai', '>', $jamMulai)
             ->first();
 
         if ($bookingBentrok) {
@@ -82,18 +100,37 @@ class BookingController extends Controller
             );
         }
 
-        Booking::create($request->only([
-            'room_id',
-            'tanggal_rapat',
-            'jam_mulai',
-            'jam_selesai',
-            'judul_rapat',
-            'penanggung_jawab',
-            'jumlah_peserta',
-            'fasilitas_tambahan',
-        ]));
+        Booking::create([
+            'room_id' => $request->room_id,
+            'tanggal_rapat' => $request->tanggal_rapat,
+            'jam_mulai' => $jamMulai,
+            'jam_selesai' => $jamSelesai,
+            'judul_rapat' => $request->judul_rapat,
+            'penanggung_jawab' => $request->penanggung_jawab,
+            'jumlah_peserta' => $request->jumlah_peserta,
+            'fasilitas_tambahan' => $request->fasilitas_tambahan,
+        ]);
 
         return redirect()->route('dashboard')->with('success', 'Booking selesai! Jadwal ruang rapat berhasil dikonfirmasi.');
+    }
+
+    // Simpan / Update Tautan, Kode, dan Password Zoom dari Dashboard
+    public function updateZoom(Request $request, Booking $booking)
+    {
+        $request->validate([
+            'tautan_zoom' => 'nullable|string|max:500',
+            'kode_zoom' => 'nullable|string|max:100',
+            'password_zoom' => 'nullable|string|max:100',
+        ]);
+
+        $booking->update($request->only([
+            'tautan_zoom',
+            'kode_zoom',
+            'password_zoom',
+        ]));
+
+        return redirect()->route('dashboard', request()->only('minggu'))
+            ->with('success', "Detail Zoom untuk rapat \"{$booking->judul_rapat}\" berhasil disimpan.");
     }
 
     /**

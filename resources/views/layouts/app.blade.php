@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-RuangRapat — Manajemen Ruang Rapat</title>
+    <title>Administrasi — Manajemen Ruang Rapat</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-zinc-50 text-zinc-900 antialiased">
     <nav class="bg-white border-b border-zinc-200/80 sticky top-0 z-30">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 font-bold text-lg tracking-tight text-zinc-900">
-                <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm font-extrabold">E</span>
-                E-RuangRapat
+                <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm font-extrabold">A</span>
+                Administrasi - BookingRuangRapat
             </a>
             <div class="flex items-center gap-1 sm:gap-2 text-sm font-medium">
                 <a href="{{ route('dashboard') }}"

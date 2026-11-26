@@ -154,6 +154,7 @@
                 @php
                     $tgl = \Carbon\Carbon::parse($item->tanggal_rapat);
                     $hariIndo = $namaHari[$tgl->format('l')] ?? $tgl->format('l');
+                    $hasZoom = !empty($item->tautan_zoom) || !empty($item->kode_zoom) || !empty($item->password_zoom);
                 @endphp
                 <tr class="hover:bg-zinc-50/80 transition">
                     <td class="py-4 px-6 whitespace-nowrap">
@@ -177,21 +178,58 @@
                             {{ $item->room->nama_ruangan }}
                         </span>
                     </td>
-                    <td class="py-4 px-6 font-semibold text-zinc-900">{{ $item->judul_rapat }}</td>
+                    <td class="py-4 px-6">
+                        <div class="font-semibold text-zinc-900">{{ $item->judul_rapat }}</div>
+                        @if($hasZoom)
+                            <div class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                @if(!empty($item->tautan_zoom))
+                                    <a href="{{ Str::startsWith($item->tautan_zoom, ['http://', 'https://']) ? $item->tautan_zoom : 'https://' . $item->tautan_zoom }}"
+                                       target="_blank"
+                                       class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-semibold bg-sky-50 text-sky-700 hover:bg-sky-100 transition">
+                                        Link Zoom &nearr;
+                                    </a>
+                                @endif
+                                @if(!empty($item->kode_zoom))
+                                    <span class="px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 font-medium">
+                                        ID: {{ $item->kode_zoom }}
+                                    </span>
+                                @endif
+                                @if(!empty($item->password_zoom))
+                                    <span class="px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 font-medium">
+                                        Pass: {{ $item->password_zoom }}
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
+                    </td>
                     <td class="py-4 px-6 text-zinc-600">
                         {{ $item->penanggung_jawab }}
                         <span class="text-xs text-zinc-400 ml-1">({{ $item->jumlah_peserta }} org)</span>
                     </td>
                     <td class="py-4 px-6 text-right whitespace-nowrap">
-                        <form method="POST" action="{{ route('riwayat.destroy', $item->id) }}" class="inline"
-                              onsubmit="return confirm('Batalkan booking \"{{ $item->judul_rapat }}\"? Ruangan akan kembali tersedia.');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                    class="cursor-pointer inline-flex items-center text-xs font-semibold text-red-600 hover:text-red-800 bg-red-50/70 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
-                                Batalkan
+                        <div class="inline-flex items-center gap-2">
+                            <button type="button"
+                                    onclick="bukaPopoverZoom(this)"
+                                    data-id="{{ $item->id }}"
+                                    data-action="{{ route('booking.zoom', ['booking' => $item->id, 'minggu' => request('minggu', 0)]) }}"
+                                    data-judul="{{ $item->judul_rapat }}"
+                                    data-tautan="{{ $item->tautan_zoom }}"
+                                    data-kode="{{ $item->kode_zoom }}"
+                                    data-password="{{ $item->password_zoom }}"
+                                    class="btn-edit-zoom cursor-pointer inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50/70 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition">
+                                Edit
                             </button>
-                        </form>
+
+                            <form method="POST" action="{{ route('riwayat.destroy', $item->id) }}" class="inline"
+                                  onsubmit="return confirm('Batalkan booking \"{{ $item->judul_rapat }}\"? Ruangan akan kembali tersedia.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                        class="cursor-pointer inline-flex items-center text-xs font-semibold text-red-600 hover:text-red-800 bg-red-50/70 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
+                                    Batalkan
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 @empty
@@ -206,4 +244,118 @@
         </table>
     </div>
 </div>
+
+<!-- Popover Edit Detail Zoom (Model Card seperti Cetak Laporan) -->
+<div id="popoverZoomMenu" style="width: 350px; max-width: calc(100vw - 2rem);"
+     class="hidden fixed bg-white rounded-2xl border border-zinc-200 shadow-lg p-5 z-50">
+    <div class="flex items-center justify-between pb-3 mb-3.5 border-b border-zinc-100">
+        <div>
+            <h4 class="text-sm font-bold text-zinc-900">Detail Tautan Zoom</h4>
+            <p id="zoomPopoverSubtitle" class="text-xs text-zinc-500 truncate max-w-[250px]"></p>
+        </div>
+        <button type="button" onclick="tutupPopoverZoom()" class="cursor-pointer text-zinc-400 hover:text-zinc-700 text-lg leading-none px-1">&times;</button>
+    </div>
+
+    <form id="formUpdateZoom" method="POST" action="" class="space-y-3.5">
+        @csrf
+        @method('PATCH')
+
+        <div>
+            <label for="input_tautan_zoom" class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+                Tautan Zoom
+            </label>
+            <input type="text" name="tautan_zoom" id="input_tautan_zoom" placeholder="https://zoom.us/j/..."
+                   class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-sm text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+            <div>
+                <label for="input_kode_zoom" class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+                    Kode Zoom
+                </label>
+                <input type="text" name="kode_zoom" id="input_kode_zoom" placeholder="123 456 7890"
+                       class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-sm text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="input_password_zoom" class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+                    Password Zoom
+                </label>
+                <input type="text" name="password_zoom" id="input_password_zoom" placeholder="Contoh: rapat26"
+                       class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-sm text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+        </div>
+
+        <div class="pt-2">
+            <button type="submit"
+                    class="w-full cursor-pointer inline-flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-xs transition">
+                Simpan Detail Zoom
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let activeEditBtn = null;
+
+    function bukaPopoverZoom(btn) {
+        const popover = document.getElementById('popoverZoomMenu');
+
+        // Jika tombol yang sama diklik ulang saat popover terbuka, tutup popover
+        if (activeEditBtn === btn && !popover.classList.contains('hidden')) {
+            tutupPopoverZoom();
+            return;
+        }
+
+        activeEditBtn = btn;
+
+        // Isi action form dan nilai yang sudah tersimpan di database
+        document.getElementById('formUpdateZoom').action = btn.dataset.action;
+        document.getElementById('zoomPopoverSubtitle').textContent = btn.dataset.judul || '';
+        document.getElementById('input_tautan_zoom').value = btn.dataset.tautan || '';
+        document.getElementById('input_kode_zoom').value = btn.dataset.kode || '';
+        document.getElementById('input_password_zoom').value = btn.dataset.password || '';
+
+        popover.classList.remove('hidden');
+
+        // Hitung posisi popover tepat di bawah tombol Edit (rata kanan tombol)
+        const rect = btn.getBoundingClientRect();
+        const popoverWidth = popover.offsetWidth;
+        const popoverHeight = popover.offsetHeight;
+
+        let leftPos = rect.right - popoverWidth;
+        if (leftPos < 16) leftPos = 16;
+
+        let topPos = rect.bottom + 8;
+        if (topPos + popoverHeight > window.innerHeight - 16) {
+            topPos = Math.max(16, rect.top - popoverHeight - 8);
+        }
+
+        popover.style.left = leftPos + 'px';
+        popover.style.top = topPos + 'px';
+
+        document.getElementById('input_tautan_zoom').focus();
+    }
+
+    function tutupPopoverZoom() {
+        document.getElementById('popoverZoomMenu').classList.add('hidden');
+        activeEditBtn = null;
+    }
+
+    document.addEventListener('click', function (e) {
+        const popover = document.getElementById('popoverZoomMenu');
+        if (!popover.classList.contains('hidden')) {
+            const isClickInsidePopover = popover.contains(e.target);
+            const isClickEditBtn = e.target.closest('.btn-edit-zoom');
+            if (!isClickInsidePopover && !isClickEditBtn) {
+                tutupPopoverZoom();
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') tutupPopoverZoom();
+    });
+
+    window.addEventListener('resize', tutupPopoverZoom);
+</script>
 @endsection

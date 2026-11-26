@@ -1,9 +1,28 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $slotJamMulai = [
+        '08:00', '08:30', '09:00', '09:30',
+        '10:00', '10:30', '11:00', '11:30',
+        '12:00', '12:30', '13:00', '13:30',
+        '14:00', '14:30', '15:00', '15:30',
+    ];
+
+    $slotJamSelesai = [
+        '08:30', '09:00', '09:30', '10:00',
+        '10:30', '11:00', '11:30', '12:00',
+        '12:30', '13:00', '13:30', '14:00',
+        '14:30', '15:00', '15:30', '16:00',
+    ];
+
+    $selectedMulai = request('jam_mulai') ? substr(request('jam_mulai'), 0, 5) : '';
+    $selectedSelesai = request('jam_selesai') ? substr(request('jam_selesai'), 0, 5) : '';
+@endphp
+
 <div class="mb-6">
     <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Booking Ruang Rapat</h2>
-    <p class="text-sm text-zinc-500 mt-0.5">Tentukan waktu rapat terlebih dahulu untuk melihat ruangan yang kosong.</p>
+    <p class="text-sm text-zinc-500 mt-0.5">Tentukan waktu rapat (operasional 08:00 – 16:00) untuk melihat ruangan yang kosong.</p>
 </div>
 
 <div class="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-xs mb-6">
@@ -21,15 +40,23 @@
         </div>
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Jam Mulai</label>
-            <input type="time" name="jam_mulai" value="{{ request('jam_mulai') }}" required
-                   onclick="try{this.showPicker()}catch(e){}"
-                   class="w-full cursor-pointer bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            <select name="jam_mulai" required
+                    class="w-full cursor-pointer bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                <option value="" disabled {{ $selectedMulai === '' ? 'selected' : '' }}>Pilih jam mulai</option>
+                @foreach($slotJamMulai as $jam)
+                    <option value="{{ $jam }}" {{ $selectedMulai === $jam ? 'selected' : '' }}>{{ $jam }} WIB</option>
+                @endforeach
+            </select>
         </div>
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Jam Selesai</label>
-            <input type="time" name="jam_selesai" value="{{ request('jam_selesai') }}" required
-                   onclick="try{this.showPicker()}catch(e){}"
-                   class="w-full cursor-pointer bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            <select name="jam_selesai" required
+                    class="w-full cursor-pointer bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                <option value="" disabled {{ $selectedSelesai === '' ? 'selected' : '' }}>Pilih jam selesai</option>
+                @foreach($slotJamSelesai as $jam)
+                    <option value="{{ $jam }}" {{ $selectedSelesai === $jam ? 'selected' : '' }}>{{ $jam }} WIB</option>
+                @endforeach
+            </select>
         </div>
         <button type="submit"
                 class="w-full cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2">
@@ -62,8 +89,8 @@
             <form method="POST" action="{{ route('booking.store') }}" class="space-y-6">
                 @csrf
                 <input type="hidden" name="tanggal_rapat" value="{{ request('tanggal_rapat') }}">
-                <input type="hidden" name="jam_mulai" value="{{ request('jam_mulai') }}">
-                <input type="hidden" name="jam_selesai" value="{{ request('jam_selesai') }}">
+                <input type="hidden" name="jam_mulai" value="{{ $selectedMulai }}">
+                <input type="hidden" name="jam_selesai" value="{{ $selectedSelesai }}">
 
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2.5">
