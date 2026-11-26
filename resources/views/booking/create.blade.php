@@ -72,26 +72,29 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         @foreach($availableRooms as $index => $room)
                         @php
+                            $isTerpadu = stripos($room->nama_ruangan, 'Terpadu') !== false;
                             $gambarRuangan = asset('foto/sidang-sehat.jpg');
-                            if (stripos($room->nama_ruangan, 'Cerdas') !== false) {
+                            if (!$isTerpadu && stripos($room->nama_ruangan, 'Cerdas') !== false) {
                                 $gambarRuangan = asset('foto/sidang-cerdas.jpg');
-                            } elseif (stripos($room->nama_ruangan, 'Ceria') !== false) {
+                            } elseif (!$isTerpadu && stripos($room->nama_ruangan, 'Ceria') !== false) {
                                 $gambarRuangan = asset('foto/sidang-ceria.jpg');
+                            } elseif (stripos($room->nama_ruangan, 'Cerdas – Ceria') !== false) {
+                                $gambarRuangan = asset('foto/sidang-cerdas.jpg');
                             }
                         @endphp
                         <label class="cursor-pointer block">
                             <div class="p-4 rounded-xl border-2 border-zinc-200 bg-zinc-50/50 hover:border-indigo-600 transition h-full flex flex-col justify-between">
                                 <div>
-                                    <div class="flex items-center justify-between gap-2">
-                                        <div class="flex items-center gap-2">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="flex items-start gap-2">
                                             <input type="radio" name="room_id" value="{{ $room->id }}"
                                                    data-nama="{{ $room->nama_ruangan }}"
                                                    data-kapasitas="Maks. {{ $room->kapasitas }} org"
                                                    data-fasilitas="{{ $room->fasilitas }}"
                                                    data-gambar="{{ $gambarRuangan }}"
                                                    {{ (old('room_id') ? old('room_id') == $room->id : $index === 0) ? 'checked' : '' }}
-                                                   required class="w-4 h-4 cursor-pointer shrink-0 room-radio">
-                                            <span class="font-bold text-sm text-zinc-900">{{ $room->nama_ruangan }}</span>
+                                                   required class="w-4 h-4 mt-0.5 cursor-pointer shrink-0 room-radio">
+                                            <span class="font-bold text-sm text-zinc-900 leading-snug">{{ $room->nama_ruangan }}</span>
                                         </div>
                                         <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-zinc-700 shrink-0">
                                             Maks. {{ $room->kapasitas }} org
@@ -99,8 +102,13 @@
                                     </div>
                                     <p class="text-xs text-zinc-500 mt-2 leading-relaxed">{{ $room->fasilitas }}</p>
                                 </div>
-                                <div class="mt-3 pt-2 border-t border-zinc-200/60 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Tersedia
+                                <div class="mt-3 pt-2 border-t border-zinc-200/60 flex items-center justify-between text-xs">
+                                    <span class="inline-flex items-center gap-1.5 font-semibold text-emerald-600">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Tersedia
+                                    </span>
+                                    @if($isTerpadu)
+                                        <span class="px-2 py-0.5 rounded font-semibold bg-indigo-50 text-indigo-600">Ruang Gabungan</span>
+                                    @endif
                                 </div>
                             </div>
                         </label>

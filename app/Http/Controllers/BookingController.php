@@ -19,11 +19,21 @@ class BookingController extends Controller
             $mulai = $request->jam_mulai;
             $selesai = $request->jam_selesai;
 
-            $availableRooms = Room::whereDoesntHave('bookings', function ($query) use ($tanggal, $mulai, $selesai) {
-                $query->whereDate('tanggal_rapat', $tanggal)
-                    ->where('jam_mulai', '<', $selesai)
-                    ->where('jam_selesai', '>', $mulai);
-            })->get();
+            $bookedRoomIds = Booking::whereDate('tanggal_rapat', $tanggal)
+                ->where('jam_mulai', '<', $selesai)
+                ->where('jam_selesai', '>', $mulai)
+                ->pluck('room_id')
+                ->unique();
+
+            $bookedRooms = Room::whereIn('id', $bookedRoomIds)->get();
+            $allRooms = Room::all();
+
+            $blockedRoomIds = collect();
+            foreach ($bookedRooms as $bookedRoom) {
+                $blockedRoomIds = $blockedRoomIds->merge($this->getBentrokRoomIds($bookedRoom, $allRooms));
+            }
+
+            $availableRooms = $allRooms->whereNotIn('id', $blockedRoomIds->unique())->values();
         }
 
         return view('booking.create', compact('availableRooms', 'checked'));
@@ -55,14 +65,21 @@ class BookingController extends Controller
             );
         }
 
-        $isBentrok = Booking::where('room_id', $request->room_id)
+        $relatedRoomIds = $this->getBentrokRoomIds($room, Room::all());
+
+        $bookingBentrok = Booking::with('room')
+            ->whereIn('room_id', $relatedRoomIds)
             ->whereDate('tanggal_rapat', $request->tanggal_rapat)
             ->where('jam_mulai', '<', $request->jam_selesai)
             ->where('jam_selesai', '>', $request->jam_mulai)
-            ->exists();
+            ->first();
 
-        if ($isBentrok) {
-            return back()->withInput()->with('error', 'Ruangan sudah terisi pada tanggal dan jam tersebut.');
+        if ($bookingBentrok) {
+            $namaRuangBentrok = $bookingBentrok->room->nama_ruangan ?? 'ruangan terkait';
+            return back()->withInput()->with(
+                'error',
+                "Jadwal bentrok! {$namaRuangBentrok} sudah dibooking pada tanggal dan jam tersebut."
+            );
         }
 
         Booking::create($request->only([
@@ -77,5 +94,36 @@ class BookingController extends Controller
         ]));
 
         return redirect()->route('dashboard')->with('success', 'Booking selesai! Jadwal ruang rapat berhasil dikonfirmasi.');
+    }
+
+    /**
+     * Mendeteksi ID ruangan mana saja yang saling beririsan fisik (Sehat, Cerdas, Ceria).
+     */
+    private function getBentrokRoomIds(Room $targetRoom, $allRooms): array
+    {
+        $getUnitFisik = function (string $nama): array {
+            $units = [];
+            if (stripos($nama, 'sehat') !== false) {
+                $units[] = 'sehat';
+            }
+            if (stripos($nama, 'cerdas') !== false) {
+                $units[] = 'cerdas';
+            }
+            if (stripos($nama, 'ceria') !== false) {
+                $units[] = 'ceria';
+            }
+            return $units;
+        };
+
+        $targetUnits = $getUnitFisik($targetRoom->nama_ruangan);
+
+        if (empty($targetUnits)) {
+            return [$targetRoom->id];
+        }
+
+        return $allRooms->filter(function ($room) use ($targetUnits, $getUnitFisik) {
+            $roomUnits = $getUnitFisik($room->nama_ruangan);
+            return count(array_intersect($targetUnits, $roomUnits)) > 0;
+        })->pluck('id')->all();
     }
 }
