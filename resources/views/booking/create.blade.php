@@ -109,6 +109,12 @@
                                 } else {
                                     $gambarRuangan = asset('foto/sidang-sehat.jpg');
                                 }
+                            } elseif (
+                                stripos($room->nama_ruangan, 'Sehat') !== false &&
+                                stripos($room->nama_ruangan, 'Cerdas') !== false &&
+                                stripos($room->nama_ruangan, 'Ceria') === false
+                            ) {
+                                $gambarRuangan = asset('foto/sidang-sehat-cerdas.jpg');
                             }
                         @endphp
                         <label class="cursor-pointer block">
@@ -184,7 +190,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Fasilitas Tambahan (Opsional)</label>
-                        <input type="text" name="fasilitas_tambahan" value="{{ old('fasilitas_tambahan') }}" placeholder="Contoh: Kabel HDMI, Mic Wireless"
+                        <input type="text" name="fasilitas_tambahan" value="{{ old('fasilitas_tambahan') }}" placeholder="Contoh: Kabel HDMI, Mic Wireless, Makanan Berat"
                                class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
